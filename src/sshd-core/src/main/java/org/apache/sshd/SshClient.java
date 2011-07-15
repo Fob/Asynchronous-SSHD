@@ -58,6 +58,7 @@ import org.apache.sshd.common.random.SingletonRandomFactory;
 import org.apache.sshd.common.session.AbstractSession;
 import org.apache.sshd.common.signature.SignatureDSA;
 import org.apache.sshd.common.signature.SignatureRSA;
+import org.apache.sshd.common.util.EventCollector;
 import org.apache.sshd.common.util.NoCloseInputStream;
 import org.apache.sshd.common.util.NoCloseOutputStream;
 import org.apache.sshd.common.util.SecurityUtils;
@@ -119,6 +120,7 @@ public class SshClient extends AbstractFactoryManager implements ClientFactoryMa
 	private PumpingMethod pumpingMethod = PumpingMethod.OFF;
 	private int nioProcessorCount = 0;
 	private StreamPumperThread streamPumper = null;
+    private EventCollector eventsWaiter = null;
 	private long streamWaitTime = 100;
 
     public SshClient() {
@@ -149,13 +151,16 @@ public class SshClient extends AbstractFactoryManager implements ClientFactoryMa
         SessionFactory handler = sessionFactory;
         if (handler == null) {
             handler = new SessionFactory();
+            sessionFactory=handler;
         }
         handler.setClient(this);
         connector.setHandler(handler);
 
         if (pumpingMethod == PumpingMethod.SELF) {
+            eventsWaiter=new EventCollector();
+            sessionFactory.setPumpListener(eventsWaiter.getSetMethod());
 			streamPumper = new StreamPumperThread();
-			streamPumper.start();
+            streamPumper.start();
 		}
     }
 
@@ -445,7 +450,7 @@ public class SshClient extends AbstractFactoryManager implements ClientFactoryMa
 			while (!isClosed && !isInterrupted()) {
 				try {
 					if (!pump()) {
-						Thread.sleep(streamWaitTime);
+						eventsWaiter.await(streamWaitTime);
 					}
 				} catch (InterruptedException e) {
 					close();

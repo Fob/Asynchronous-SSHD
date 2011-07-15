@@ -31,10 +31,8 @@ import org.apache.sshd.common.channel.AbstractChannel;
 import org.apache.sshd.common.future.CloseFuture;
 import org.apache.sshd.common.future.SshFutureListener;
 import org.apache.sshd.common.session.AbstractSession;
-import org.apache.sshd.common.util.Buffer;
-import org.apache.sshd.common.util.IoUtils;
+import org.apache.sshd.common.util.*;
 import org.apache.sshd.client.PumpingMethod;
-import org.apache.sshd.common.util.LogUtils;
 
 /**
  * TODO Add javadoc
@@ -263,5 +261,40 @@ public abstract class AbstractClientChannel extends AbstractChannel implements C
     public boolean pump()
     {
         throw new IllegalArgumentException("Delegating pumping is not implemented");
+    }
+
+    public InputStream getInput()
+    {
+        throw new UnsupportedOperationException("getInput for "+this.getClass().getName());
+    }
+
+    public InputStream getError()
+    {
+        throw new UnsupportedOperationException("getError for "+this.getClass().getName());
+    }
+
+    public OutputStream getOutput()
+    {
+        throw new UnsupportedOperationException("getOutput for "+this.getClass().getName());
+    }
+
+    public void setInputListener(SshListener<AutoFlushOutputStream.WriteStreamEvent> listener)
+    {
+        throw new UnsupportedOperationException("setInputListener for "+this.getClass().getName());
+    }
+
+    public void setErrorListener(SshListener<AutoFlushOutputStream.WriteStreamEvent> listener)
+    {
+        throw new UnsupportedOperationException("setErrorListener for "+this.getClass().getName());
+    }
+
+    public void setPumpingListener(SshListener listener)
+    {
+        throw new UnsupportedOperationException("setPumpingListener for "+this.getClass().getName());
+    }
+
+    public void generateStreams(boolean mergeErrWithOut) throws IOException
+    {
+        throw new UnsupportedOperationException("generateStreams for "+this.getClass().getName());
     }
 }

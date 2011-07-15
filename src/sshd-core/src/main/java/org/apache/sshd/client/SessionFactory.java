@@ -24,6 +24,7 @@ import org.apache.sshd.client.session.ClientSessionImpl;
 import org.apache.sshd.common.AbstractSessionIoHandler;
 import org.apache.sshd.common.session.AbstractSession;
 import org.apache.sshd.ClientSession;
+import org.apache.sshd.common.util.SshListener;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,6 +41,7 @@ public class SessionFactory extends AbstractSessionIoHandler {
 
     protected SshClient client;
     private List<ClientSession> sessions = new ArrayList<ClientSession>();
+    private SshListener listener=null;
 
     public void setClient(SshClient client) {
         this.client = client;
@@ -51,6 +53,7 @@ public class SessionFactory extends AbstractSessionIoHandler {
 		if (client.getPumpingMethod() == PumpingMethod.PARENT
 				|| client.getPumpingMethod() == PumpingMethod.SELF)
 			session.setPumpingMethod(PumpingMethod.PARENT);
+        session.setPumpingListener(listener);
 		
 		synchronized (sessions) {
 			sessions.add(session);
@@ -69,5 +72,9 @@ public class SessionFactory extends AbstractSessionIoHandler {
 		}
 		super.sessionClosed(ioSession);
 	}
-	
+
+    public void setPumpListener(SshListener listener)
+    {
+        this.listener = listener;
+    }
 }

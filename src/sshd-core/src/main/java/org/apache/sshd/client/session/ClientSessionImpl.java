@@ -47,6 +47,7 @@ import org.apache.sshd.common.future.SshFutureListener;
 import org.apache.sshd.common.session.AbstractSession;
 import org.apache.sshd.common.util.Buffer;
 import org.apache.sshd.common.util.LogUtils;
+import org.apache.sshd.common.util.SshListener;
 import org.apache.sshd.server.channel.OpenChannelException;
 import org.apache.sshd.client.PumpingMethod;
 
@@ -65,6 +66,7 @@ public class ClientSessionImpl extends AbstractSession implements ClientSession 
     private UserAuth userAuth;
     private AuthFuture authFuture;
     private PumpingMethod pumpingMethod=PumpingMethod.OFF;
+    private SshListener pumpingListener=null;
     /**
      * For clients to store their own metadata
      */
@@ -169,6 +171,7 @@ public class ClientSessionImpl extends AbstractSession implements ClientSession 
 
     public ChannelShell createShellChannel() throws Exception {
         ChannelShell channel = new ChannelShell();
+        channel.setPumpingListener(pumpingListener);
         if(pumpingMethod==PumpingMethod.PARENT || pumpingMethod==PumpingMethod.SELF)
             channel.setPumpingMethod(PumpingMethod.PARENT);
         registerChannel(channel);
@@ -177,6 +180,7 @@ public class ClientSessionImpl extends AbstractSession implements ClientSession 
 
     public ChannelExec createExecChannel(String command) throws Exception {
         ChannelExec channel = new ChannelExec(command);
+        channel.setPumpingListener(pumpingListener);
         if(pumpingMethod==PumpingMethod.PARENT || pumpingMethod==PumpingMethod.SELF)
             channel.setPumpingMethod(PumpingMethod.PARENT);
         registerChannel(channel);
@@ -185,6 +189,7 @@ public class ClientSessionImpl extends AbstractSession implements ClientSession 
 
     public ChannelSubsystem createSubsystemChannel(String subsystem) throws Exception {
         ChannelSubsystem channel = new ChannelSubsystem(subsystem);
+        channel.setPumpingListener(pumpingListener);
         if(pumpingMethod==PumpingMethod.PARENT || pumpingMethod==PumpingMethod.SELF)
             channel.setPumpingMethod(PumpingMethod.PARENT);
         registerChannel(channel);
@@ -525,5 +530,10 @@ public class ClientSessionImpl extends AbstractSession implements ClientSession 
             return dataTransferred;
         }
         return false;
+    }
+
+    public void setPumpingListener(SshListener pumpingListener)
+    {
+        this.pumpingListener = pumpingListener;
     }
 }

@@ -20,12 +20,13 @@ package org.apache.sshd.client.channel;
 
 import org.apache.sshd.client.future.OpenFuture;
 import org.apache.sshd.common.SshConstants;
+import org.apache.sshd.common.util.AutoFlushOutputStream;
 import org.apache.sshd.common.util.Buffer;
 import org.apache.sshd.client.PumpingMethod;
 import org.apache.sshd.common.util.LogUtils;
+import org.apache.sshd.common.util.SshListener;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 
 /**
  * TODO Add javadoc
@@ -34,8 +35,13 @@ import java.io.InputStream;
  */
 public class ChannelSession extends AbstractClientChannel {
 
+    private InputStream networkInput=null;
+    private OutputStream networkOutput=null;
+    private InputStream networkError=null;
+
 	private Thread streamPumper = null;
 	private PumpingMethod pumpingMethod= PumpingMethod.SELF;
+    private SshListener pumpingListener = null;
 
     public ChannelSession() {
         super("session");
@@ -127,24 +133,29 @@ public class ChannelSession extends AbstractClientChannel {
     public boolean pump()
     {
         try {
-            if (!closeFuture.isClosed()) {
-                int len =Math.min(in.available(), remoteWindow.getPacketSize()); 
-                if (len > 0) {
-                    if(remoteWindow.consumeIfAvaliable(len))
+            if (openFuture.isOpened())
+            {
+                if (!closeFuture.isClosed())
+                {
+                    int len = Math.min(in.available(), remoteWindow.getPacketSize());
+                    if (len > 0)
                     {
-                    	Buffer buffer = session.createBuffer(SshConstants.Message.SSH_MSG_CHANNEL_DATA, 0);
-                    	buffer.putInt(recipient);
-                    	int wpos1 = buffer.wpos(); // keep buffer position to write data length later
-                    	buffer.putInt(0);
-                    	int wpos2 = buffer.wpos(); // keep buffer position for data write
-                    	buffer.wpos(wpos2 + remoteWindow.getPacketSize()); // Make room
-                    	buffer.wpos(wpos1);
-                    	buffer.putInt(len);
-                    	buffer.wpos(wpos2 + len);
-                    	securedRead(in, buffer.array(), wpos2, len); // read data into buffer
-                    	LogUtils.debug(log,"Send SSH_MSG_CHANNEL_DATA on channel {0}", id);
-                    	session.writePacket(buffer);
-                    	return true;
+                        if (remoteWindow.consumeIfAvaliable(len))
+                        {
+                            Buffer buffer = session.createBuffer(SshConstants.Message.SSH_MSG_CHANNEL_DATA, 0);
+                            buffer.putInt(recipient);
+                            int wpos1 = buffer.wpos(); // keep buffer position to write data length later
+                            buffer.putInt(0);
+                            int wpos2 = buffer.wpos(); // keep buffer position for data write
+                            buffer.wpos(wpos2 + remoteWindow.getPacketSize()); // Make room
+                            buffer.wpos(wpos1);
+                            buffer.putInt(len);
+                            buffer.wpos(wpos2 + len);
+                            securedRead(in, buffer.array(), wpos2, len); // read data into buffer
+                            LogUtils.debug(log, "Send SSH_MSG_CHANNEL_DATA on channel {0}", id);
+                            session.writePacket(buffer);
+                            return true;
+                        }
                     }
                 }
             }
@@ -169,5 +180,71 @@ public class ChannelSession extends AbstractClientChannel {
     public PumpingMethod getPumpingMethod()
     {
         return pumpingMethod;
+    }
+
+    public void generateStreams(boolean mergeErrWithOut) throws IOException
+    {
+        if(getIn()!=null || getOut()!=null || getErr()!=null)
+        {
+            log.warn("Streams will be override");
+        }
+
+        this.networkInput=new PipedInputStream();
+        AutoFlushOutputStream out=new AutoFlushOutputStream((PipedInputStream) networkInput);
+        setOut(out);
+        if(mergeErrWithOut)
+        {
+            setErr(out);
+            networkError=networkInput;
+        }
+        else
+        {
+            networkError=new PipedInputStream();
+            setErr(new AutoFlushOutputStream((PipedInputStream) networkError));
+        }
+
+        this.networkOutput = new AutoFlushOutputStream();
+        ((AutoFlushOutputStream)networkOutput).setWriteListener(pumpingListener);
+        setIn(new PipedInputStream((PipedOutputStream) networkOutput));
+    }
+
+    public InputStream getInput()
+    {
+        return networkInput;
+    }
+
+    public OutputStream getOutput()
+    {
+        return networkOutput;
+    }
+
+    public InputStream getError()
+    {
+        return networkError;
+    }
+
+    public void setInputListener(SshListener<AutoFlushOutputStream.WriteStreamEvent> listener)
+    {
+        if(getOut() instanceof AutoFlushOutputStream)
+        {
+            ((AutoFlushOutputStream)getOut()).setWriteListener(listener);
+        }
+        else
+            throw new IllegalArgumentException("can't setup listener to custom stream, use generateStreams() insted of setOut()");
+    }
+
+    public void setErrorListener(SshListener<AutoFlushOutputStream.WriteStreamEvent> listener)
+    {
+        if(getOut() instanceof AutoFlushOutputStream)
+        {
+            ((AutoFlushOutputStream)getErr()).setWriteListener(listener);
+        }
+        else
+            throw new IllegalArgumentException("can't setup listener to custom stream, use generateStreams() insted of setErr()");
+    }
+
+    public void setPumpingListener(SshListener listener)
+    {
+        pumpingListener = listener;
     }
 }

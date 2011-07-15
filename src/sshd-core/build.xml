@@ -1,6 +1,7 @@
 <project name="Asynchronous-SSHD" default="build">
     <target name="init">
-        <delete file="./bin/sshd-core.jar"/>
+        <mkdir dir="./bin/jdk-${java.version}"/>
+        <delete file="./bin/jdk-${java.version}/sshd-core.jar"/>
         <mkdir dir="./out"/>
     </target>
     <target name="compile">
@@ -27,7 +28,7 @@
         </manifest>
     </target>
     <target name="build" depends="init,compile,meta">
-        <jar destfile="./bin/sshd-core.jar">
+        <jar destfile="./bin/jdk-${java.version}/sshd-core.jar">
             <fileset dir="./out"/>
         </jar>
     </target>

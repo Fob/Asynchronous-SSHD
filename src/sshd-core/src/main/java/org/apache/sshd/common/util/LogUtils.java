@@ -7,6 +7,15 @@ import java.text.MessageFormat;
 
 public class LogUtils
 {
+
+    public static void info(Log log, String message, Throwable e, Object... objects)
+    {
+        if (log.isInfoEnabled())
+        {
+            log.info(MessageFormat.format(message, objects), e);
+        }
+    }
+
     public static void info(Log log, String message, Object... objects)
     {
         if (log.isInfoEnabled())
@@ -15,9 +24,9 @@ public class LogUtils
         }
     }
 
-    public static void info(Log log, String message, Throwable e, Object[] objects)
+    public static void trace(Log log, String message, Throwable e, Object... objects)
     {
-        if (log.isInfoEnabled())
+        if (log.isTraceEnabled())
         {
             log.info(MessageFormat.format(message, objects), e);
         }
@@ -31,11 +40,11 @@ public class LogUtils
         }
     }
 
-    public static void trace(Log log, String message, Throwable e, Object[] objects)
+    public static void warn(Log log, String message, Throwable e, Object... objects)
     {
-        if (log.isTraceEnabled())
+        if (log.isWarnEnabled())
         {
-            log.info(MessageFormat.format(message, objects), e);
+            log.warn(MessageFormat.format(message, objects), e);
         }
     }
 
@@ -47,11 +56,11 @@ public class LogUtils
         }
     }
 
-    public static void warn(Log log, String message, Throwable e, Object[] objects)
+    public static void error(Log log, String message, Throwable e, Object... objects)
     {
-        if (log.isWarnEnabled())
+        if (log.isErrorEnabled())
         {
-            log.warn(MessageFormat.format(message, objects), e);
+            log.error(MessageFormat.format(message, objects), e);
         }
     }
 
@@ -63,11 +72,11 @@ public class LogUtils
         }
     }
 
-    public static void error(Log log, String message, Throwable e, Object[] objects)
+    public static void debug(Log log, String message, Throwable e, Object... objects)
     {
-        if (log.isErrorEnabled())
+        if (log.isDebugEnabled())
         {
-            log.error(MessageFormat.format(message, objects), e);
+            log.debug(MessageFormat.format(message, objects), e);
         }
     }
 
@@ -79,11 +88,5 @@ public class LogUtils
         }
     }
 
-    public static void debug(Log log, String message, Throwable e, Object[] objects)
-    {
-        if (log.isDebugEnabled())
-        {
-            log.debug(MessageFormat.format(message, objects), e);
-        }
-    }
+
 }

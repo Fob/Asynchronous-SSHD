@@ -168,6 +168,7 @@ public class Window {
     
     public boolean consumeIfAvaliable(int len) throws InterruptedException, WindowClosedException
     {
+        log.trace("consumeIfAvaliable "+len);
         synchronized (lock) {
             if (size < len && !closed) {
                 LogUtils.debug(log,"Waiting for {0} bytes on {1}", len, name);

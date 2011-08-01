@@ -499,6 +499,7 @@ public class ClientSessionImpl extends AbstractSession implements ClientSession 
 
     public PumpingMethod getPumpingMethod()
     {
+        LogUtils.trace(log,"session getPumpingMethod {0}",pumpingMethod);
         return pumpingMethod;
     }
 
@@ -511,6 +512,7 @@ public class ClientSessionImpl extends AbstractSession implements ClientSession 
 
     public boolean pump()
     {
+        log.trace("pump session");
         if (!closing)
         {
             boolean dataTransferred = false;

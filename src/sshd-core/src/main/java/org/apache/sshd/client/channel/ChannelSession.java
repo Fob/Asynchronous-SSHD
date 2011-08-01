@@ -126,6 +126,7 @@ public class ChannelSession extends AbstractClientChannel {
 	
     public boolean pump()
     {
+        log.trace("pump channel");
         try {
             if (!closeFuture.isClosed()) {
                 int len =Math.min(in.available(), remoteWindow.getPacketSize()); 

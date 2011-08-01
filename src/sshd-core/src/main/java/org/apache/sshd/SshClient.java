@@ -28,6 +28,8 @@ import java.util.LinkedList;
 import java.util.Iterator;
 import java.security.InvalidKeyException;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.mina.core.future.IoFutureListener;
 import org.apache.mina.core.service.IoConnector;
 import org.apache.mina.transport.socket.nio.NioSocketConnector;
@@ -58,6 +60,7 @@ import org.apache.sshd.common.random.SingletonRandomFactory;
 import org.apache.sshd.common.session.AbstractSession;
 import org.apache.sshd.common.signature.SignatureDSA;
 import org.apache.sshd.common.signature.SignatureRSA;
+import org.apache.sshd.common.util.LogUtils;
 import org.apache.sshd.common.util.NoCloseInputStream;
 import org.apache.sshd.common.util.NoCloseOutputStream;
 import org.apache.sshd.common.util.SecurityUtils;
@@ -110,7 +113,7 @@ import org.apache.sshd.client.PumpingMethod;
  * @author <a href="mailto:dev@mina.apache.org">Apache MINA SSHD Project</a>
  */
 public class SshClient extends AbstractFactoryManager implements ClientFactoryManager {
-
+    private static final Log log = LogFactory.getLog(SshClient.class);
     protected IoConnector connector;
     protected SessionFactory sessionFactory;
 
@@ -149,12 +152,14 @@ public class SshClient extends AbstractFactoryManager implements ClientFactoryMa
         SessionFactory handler = sessionFactory;
         if (handler == null) {
             handler = new SessionFactory();
+            sessionFactory = handler;
         }
         handler.setClient(this);
         connector.setHandler(handler);
 
         if (pumpingMethod == PumpingMethod.SELF) {
 			streamPumper = new StreamPumperThread();
+            log.trace("start StreamPumperThread");
 			streamPumper.start();
 		}
     }
@@ -432,11 +437,13 @@ public class SshClient extends AbstractFactoryManager implements ClientFactoryMa
 		private boolean isClosed = false;
 
 		public StreamPumperThread() {
-			super("[SSHD] StreamPumperThread");
-			setDaemon(true);
+            super("[SSHD] StreamPumperThread");
+			log.trace("create stream pumping thread");
+            setDaemon(true);
 		}
 
 		public synchronized void close() {
+            log.trace("close StreamPumperThread");
 			isClosed = true;
 		}
 
@@ -448,8 +455,13 @@ public class SshClient extends AbstractFactoryManager implements ClientFactoryMa
 						Thread.sleep(streamWaitTime);
 					}
 				} catch (InterruptedException e) {
+                    log.trace("interrupt StreamPumperThread");
 					close();
 				}
+                catch (Exception e)
+                {
+                    log.error("Unexpected Exception while pumping ",e);
+                }
 			}
 		}
 	}
@@ -465,18 +477,24 @@ public class SshClient extends AbstractFactoryManager implements ClientFactoryMa
 		this.pumpingMethod = pumpingMethod;
 	}
 
-	public boolean pump() {
-		synchronized (sessionFactory.getSessions()) {
-			boolean dataTransferred = false;
-			for (ClientSession session : sessionFactory.getSessions()) {
-				if (session.getPumpingMethod() == PumpingMethod.PARENT)
-					dataTransferred = dataTransferred || session.pump();
-			}
-			return dataTransferred;
-		}
-	}
-	
-	public void setStreamWaitTime(long streamWaitTime) {
+    public boolean pump()
+    {
+        log.trace("pump client");
+        boolean dataTransferred = false;
+        log.trace("try pump sessions");
+        for (ClientSession session : sessionFactory.getSessions())
+        {
+            log.trace("check session pumping method");
+            if (session.getPumpingMethod() == PumpingMethod.PARENT)
+            {
+                dataTransferred = dataTransferred || session.pump();
+            }
+        }
+        LogUtils.trace(log, "client pump result {0}", dataTransferred);
+        return dataTransferred;
+    }
+
+    public void setStreamWaitTime(long streamWaitTime) {
 		this.streamWaitTime = streamWaitTime;
 	}
 }

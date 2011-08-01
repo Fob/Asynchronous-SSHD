@@ -24,9 +24,11 @@ import org.apache.sshd.client.session.ClientSessionImpl;
 import org.apache.sshd.common.AbstractSessionIoHandler;
 import org.apache.sshd.common.session.AbstractSession;
 import org.apache.sshd.ClientSession;
+import org.apache.sshd.common.util.LogUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * A factory of client sessions.
@@ -39,7 +41,7 @@ import java.util.List;
 public class SessionFactory extends AbstractSessionIoHandler {
 
     protected SshClient client;
-    private List<ClientSession> sessions = new ArrayList<ClientSession>();
+    private List<ClientSession> sessions = new CopyOnWriteArrayList<ClientSession>();
 
     public void setClient(SshClient client) {
         this.client = client;
@@ -52,9 +54,7 @@ public class SessionFactory extends AbstractSessionIoHandler {
 				|| client.getPumpingMethod() == PumpingMethod.SELF)
 			session.setPumpingMethod(PumpingMethod.PARENT);
 		
-		synchronized (sessions) {
 			sessions.add(session);
-		}
 		return session;
     }
 
@@ -64,10 +64,11 @@ public class SessionFactory extends AbstractSessionIoHandler {
 
 	@Override
 	public void sessionClosed(IoSession ioSession) throws Exception {
-		synchronized (sessions) {
-			sessions.remove(AbstractSession.getSession(ioSession, false));
-		}
-		super.sessionClosed(ioSession);
+        if (sessions.contains(AbstractSession.getSession(ioSession, false)))
+        {
+            sessions.remove(AbstractSession.getSession(ioSession, false));
+        }
+        super.sessionClosed(ioSession);
 	}
 	
 }

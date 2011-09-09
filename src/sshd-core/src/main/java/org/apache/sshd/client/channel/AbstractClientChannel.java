@@ -142,6 +142,7 @@ public abstract class AbstractClientChannel extends AbstractChannel implements C
                         timeout = t - System.currentTimeMillis();
                         if (timeout <= 0) {
                             cond |= TIMEOUT;
+                            LogUtils.trace(log, "WaitFor call returning by timeout on channel {0}, mask={1}, cond={2}", id, mask, cond);
                             return cond;
                         }
                     }

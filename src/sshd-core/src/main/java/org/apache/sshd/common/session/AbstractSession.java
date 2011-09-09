@@ -986,6 +986,8 @@ public abstract class AbstractSession implements Session {
      * @param channel the channel
      */
     public void unregisterChannel(Channel channel) {
+        LogUtils.trace(log,"unregister channel {0} session {1}",new Throwable("StackTrace"),channel.getId(),this);
+
         channels.remove(channel.getId());
     }
 
@@ -1024,7 +1026,7 @@ public abstract class AbstractSession implements Session {
         if (channel == null) {
             buffer.rpos(buffer.rpos() - 5);
             SshConstants.Message cmd = buffer.getCommand();
-            throw new SshException("Received " + cmd + " on unknown channel " + recipient);
+            throw new SshException("Received " + cmd + " on unknown channel " + recipient+" session "+this);
         }
         return channel;
     }

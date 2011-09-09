@@ -148,7 +148,6 @@ public class SshClient extends AbstractFactoryManager implements ClientFactoryMa
 			connector = new NioSocketConnector();
 		else
 			connector = new NioSocketConnector(nioProcessorCount);
-
         SessionFactory handler = sessionFactory;
         if (handler == null) {
             handler = new SessionFactory();
@@ -165,6 +164,10 @@ public class SshClient extends AbstractFactoryManager implements ClientFactoryMa
     }
 
     public void stop() {
+        if(sessionFactory.getSessions().size()>0)
+        {
+            log.error("connector has sessions "+sessionFactory.getSessions());
+        }
         connector.dispose();
         connector = null;
 		if (streamPumper != null)
@@ -487,7 +490,14 @@ public class SshClient extends AbstractFactoryManager implements ClientFactoryMa
             log.trace("check session pumping method");
             if (session.getPumpingMethod() == PumpingMethod.PARENT)
             {
-                dataTransferred = dataTransferred || session.pump();
+                try
+                {
+                    dataTransferred = dataTransferred || session.pump();
+                }
+                catch (Exception e)
+                {
+                    log.error("Unexpected session pumping error",e);
+                }
             }
         }
         LogUtils.trace(log, "client pump result {0}", dataTransferred);

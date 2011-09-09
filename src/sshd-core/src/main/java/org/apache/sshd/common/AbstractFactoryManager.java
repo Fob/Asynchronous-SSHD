@@ -131,7 +131,7 @@ public abstract class AbstractFactoryManager implements FactoryManager {
                 input.close();
             }
         } catch (Exception e) {
-            log.warn("Unable to load version from resources. Missing org/apache/sshd/sshd-version.properties ?", e);
+            //todo log.warn("Unable to load version from resources. Missing org/apache/sshd/sshd-version.properties ?", e);
         }
     }
 

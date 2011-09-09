@@ -123,7 +123,7 @@ public abstract class AbstractChannel implements Channel {
         if (len < 0 || len > 32768) {
             throw new IllegalStateException("Bad item length: " + len);
         }
-        LogUtils.debug(log,"Received SSH_MSG_CHANNEL_DATA on channel {0}", id);
+        LogUtils.debug(log,"Received SSH_MSG_CHANNEL_DATA on channel {0} session {1}", id,session);
         if (log.isTraceEnabled()) {
             log.trace("Received channel data: "+BufferUtils.printHex(buffer.array(), buffer.rpos(), len));
         }

@@ -209,7 +209,7 @@ public class ClientSessionImpl extends AbstractSession implements ClientSession 
 
     protected void doHandleMessage(Buffer buffer) throws Exception {
         SshConstants.Message cmd = buffer.getCommand();
-        LogUtils.debug(log,"Received packet {0}", cmd);
+        LogUtils.debug(log,"Received packet {0} session {1}", cmd,this);
         switch (cmd) {
             case SSH_MSG_DISCONNECT: {
                 int code = buffer.getInt();
@@ -521,7 +521,14 @@ public class ClientSessionImpl extends AbstractSession implements ClientSession 
                 ClientChannel clientChannel = (ClientChannel) channel;
                 if (clientChannel.getPumpingMethod() == PumpingMethod.PARENT)
                 {
-                    dataTransferred = dataTransferred || clientChannel.pump();
+                    try
+                    {
+                        dataTransferred = dataTransferred || clientChannel.pump();
+                    }
+                    catch (Exception e)
+                    {
+                        log.error("Unexpected channel pumping exception",e);
+                    }
                 }
             }
             return dataTransferred;

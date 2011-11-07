@@ -15,6 +15,7 @@
         <mkdir dir="./out/META-INF"/>
         <copy file="./../NOTICE.txt" tofile="./out/META-INF/NOTICE.txt"/>
         <copy file="./../LICENSE.txt" tofile="./out/META-INF/LICENSE.txt"/>
+		<copy file="./src/main/java/org/apache/sshd/sshd-version.properties" tofile="./out/org/apache/sshd/sshd-version.properties"/>
         <manifest file="./out/META-INF/MANIFEST">
             <section name="Base-Info">
                 <attribute name="Implementation-Title" value="Apache Mina SSHD"/>
